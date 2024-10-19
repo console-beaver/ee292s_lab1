@@ -14,7 +14,7 @@ UPDATE_PERIOD = 0.2
 GYRO_SCALE = 1000 / 2 ** 16 
 COMBINED_THRESH = 10
 
-DELTA_T
+DELTA_T = 0.1
 
 def main():
     icm20948=ICM20948.ICM20948()
@@ -38,14 +38,12 @@ def main():
     kf.H = np.array([[1, 0, 0]])
 
     # real-time plotting init
-    accel_hist = [0]
-    gyro_hist = [0]
-    fused_hist = [0]
+    xpos_hist = [0]
     time_vec = [0]
     beginning_time = time.time()
     fig, ax = plt.subplots(1,1)
-    line1, = ax.plot(time_vec, np.squeeze(accel_hist))
-    refline, = ax.plot(time_vec, np.squeeze(fused_hist))
+    line1, = ax.plot(time_vec, np.squeeze(xpos_hist))
+    refline, = ax.plot(time_vec, np.squeeze(xpos_hist))
 
     plt.xlabel('time')
     plt.ylabel('gravity angle')
@@ -53,7 +51,7 @@ def main():
     plt.legend(['Kalman'], loc='upper left')
     fig.canvas.draw()
     axbackground = fig.canvas.copy_from_bbox(ax.bbox)
-    ax.set_ylim(0, 180)
+    # ax.set_ylim(0, 180)
     plt.show(block=False)
     while True:
         start_time = time.time()
@@ -71,10 +69,16 @@ def main():
 
         print("\r\n /-------------------------------------------------------------/ \r\n")
 
+        # remove accel drift from accel measurement caused by gravity
+
+        corrected_accel = Accel[0]
+        part1_accel =  ...
+        
+
         # kalman filter x position
 
         kf.predict()
-        kf.update(Accel[0])
+        kf.update(corrected_accel)
         part2_xpos = kf.x[0]  # x = [pos, vel, accel]
         # part1_accel = math.atan2((Accel[0]**2 + Accel[1]**2)**0.5, float(Accel[2])) * 57.3
         print(f'PART 2 (with accelerometer): {part2_xpos}')
@@ -87,21 +91,19 @@ def main():
 
         # real-time plot:
         time_vec.append(start_time - beginning_time)
-        accel_hist.append(part1_accel)
-        gyro_hist.append(part1_gyro)
-        fused_hist.append(part1_fused)
+        xpos_hist.append(part2_xpos)
 
         line1.set_xdata(time_vec)
         line1.set_ydata(np.squeeze(xpos_hist))
 
         refline.set_xdata(time_vec)
-        refline.set_ydata(np.squeeze([90]*len(time_vec)))
+        refline.set_ydata(np.squeeze([0]*len(time_vec)))
 
         fig.canvas.restore_region(axbackground)
-        ax.set_xlim(0, time_vec[-1])
+        # ax.set_xlim(0, time_vec[-1])
+        ax.relim()
+        ax.autoscale_view()
         ax.draw_artist(line1)
-        ax.draw_artist(line2)
-        ax.draw_artist(line3)
         ax.draw_artist(refline)
         fig.canvas.blit(ax.bbox)
 
