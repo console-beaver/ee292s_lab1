@@ -12,7 +12,7 @@ import numpy as np
 UPDATE_PERIOD = 0.2
 GYRO_SCALE = 2000 / 2 ** 16 
 COMBINED_THRESH = 10
-ACCEL_WEIGHT = 0.5
+beta = 0.9
 
 accel_fn = lambda x: math.atan2(
     (x["ax"]**2 + x["ay"]**2)**0.5,
@@ -75,6 +75,7 @@ def main():
 
         icm20948.icm20948_Gyro_Accel_Read()
         delta_t = time.time() - start_time
+        start_time = time.time()
 
         delta_theta_x, delta_theta_y, delta_theta_z = (
             np.array(Gyro) * delta_t * np.pi / 180 * GYRO_SCALE
@@ -88,7 +89,7 @@ def main():
         part1_fused = math.atan2((g[0] ** 2 + g[1] ** 2) ** 0.5, g[2])
         part1_accel = math.atan2((Accel[0] ** 2 + Accel[1] ** 2) ** 0.5, Accel[2])
 
-        theta_fused = part1_fused * beta + (1 - beta) * part1_accel
+        part1_fused = (part1_fused * beta + (1 - beta) * part1_accel)
 
         g_gyro = (
             R_x(delta_theta_x)
@@ -98,9 +99,9 @@ def main():
 
         # real-time plot:
         time_vec.append(start_time - beginning_time)
-        accel_hist.append(part1_accel)
-        gyro_hist.append(part1_gyro)
-        fused_hist.append(part1_fused)
+        accel_hist.append(part1_accel * 57.3)
+        gyro_hist.append(part1_gyro * 57.3)
+        fused_hist.append(part1_fused * 57.3)
 
         line1.set_xdata(time_vec)
         line1.set_ydata(np.squeeze(accel_hist))
@@ -121,8 +122,6 @@ def main():
         ax.draw_artist(line3)
         ax.draw_artist(refline)
         fig.canvas.blit(ax.bbox)
-
-        start_time = time.time()
 
 if __name__ == '__main__':
     main()
