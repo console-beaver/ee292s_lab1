@@ -10,9 +10,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 UPDATE_PERIOD = 0.2
-GYRO_SCALE = 1000 / 2 ** 16 
+GYRO_SCALE = 2000 / 2 ** 16 
 COMBINED_THRESH = 10
 ACCEL_WEIGHT = 0.5
+
+accel_fn = lambda x: math.atan2(
+    (x["ax"]**2 + x["ay"]**2)**0.5,
+    float(x["az"])
+)
+
+R_x = lambda theta: np.array([
+    [1, 0, 0],
+    [0, np.cos(theta), -np.sin(theta)],
+    [0, np.sin(theta), np.cos(theta)]
+])
+
+R_y = lambda theta: np.array([
+    [np.cos(theta), 0, np.sin(theta)],
+    [0, 1, 0],
+    [-np.sin(theta), 0, np.cos(theta)]
+])
+
+R_z = lambda theta: np.array([
+    [np.cos(theta), -np.sin(theta), 0],
+    [np.sin(theta), np.cos(theta), 0],
+    [0, 0, 1],
+])
 
 def main():
     icm20948=ICM20948.ICM20948()
@@ -43,45 +66,35 @@ def main():
     ax.set_ylim(0, 180)
     plt.show(block=False)
 
+    icm20948.icm20948_Gyro_Accel_Read()
+    g = np.array(Accel)
+    g_gyro = np.array(Accel)
+    start_time = time.time()
     while True:
-        start_time = time.time()
         # time.sleep(0.1)
 
         icm20948.icm20948_Gyro_Accel_Read()
-        # icm20948.icm20948MagRead()
-        # icm20948.icm20948CalAvgValue()
-        # icm20948.imuAHRSupdate(MotionVal[0] * 0.0175, MotionVal[1] * 0.0175,MotionVal[2] * 0.0175,
-         #            MotionVal[3],MotionVal[4],MotionVal[5],
-        #             MotionVal[6], MotionVal[7], MotionVal[8])
-        # pitch = math.asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3
-        # roll  = math.atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3
-        # yaw   = math.atan2(-2 * q1 * q2 - 2 * q0 * q3, 2 * q2 * q2 + 2 * q3 * q3 - 1) * 57.3
-        pitch = roll = yaw = 0
+        delta_t = time.time() - start_time
 
-        print("\r\n /-------------------------------------------------------------/ \r\n")
+        delta_theta_x, delta_theta_y, delta_theta_z = (
+            np.array(Gyro) * delta_t * np.pi / 180 * GYRO_SCALE
+        )
+        
+        g = (
+            R_x(delta_theta_x)
+            @ R_y(delta_theta_y) @ R_z(delta_theta_z) @ g
+        )
 
-        # accelerometer approach:
+        part1_fused = math.atan2((g[0] ** 2 + g[1] ** 2) ** 0.5, g[2])
+        part1_accel = math.atan2((Accel[0] ** 2 + Accel[1] ** 2) ** 0.5, Accel[2])
 
-        part1_accel = math.atan2((Accel[0]**2 + Accel[1]**2)**0.5, float(Accel[2])) * 57.3
-        print(f'PART 1 (with accelerometer): {part1_accel}')
+        theta_fused = part1_fused * beta + (1 - beta) * part1_accel
 
-        # gyro approach:
-
-        gyro_state[0] += delta_t * Gyro[0] * GYRO_SCALE
-        gyro_state[1] += delta_t * Gyro[1] * GYRO_SCALE
-        gyro_state[2] += delta_t * Gyro[2] * GYRO_SCALE
-
-        part1_gyro = math.acos(math.cos(math.radians(gyro_state[0])) * math.cos(math.radians(gyro_state[1]))) * 57.3
-        print(f'PART 1 (with gyro): {part1_gyro}')
-
-        # combined approach:
-        part1_fused = 0
-
-        # general measurements:
-
-        # print('\r\nRoll = %.2f , Pitch = %.2f , Yaw = %.2f\r\n'%(roll,pitch,yaw))
-        # print('\r\nAcceleration:  X = %d , Y = %d , Z = %d\r\n'%(Accel[0],Accel[1],Accel[2]))
-        # print('\r\nGyroscope:     X = %d , Y = %d , Z = %d\r\n'%(Gyro[0],Gyro[1],Gyro[2]))
+        g_gyro = (
+            R_x(delta_theta_x)
+            @ R_y(delta_theta_y) @ R_z(delta_theta_z) @ g_gyro
+        )
+        part1_gyro = math.atan2((g_gyro[0] ** 2 + g_gyro[1] ** 2) ** 0.5, g_gyro[2])
 
         # real-time plot:
         time_vec.append(start_time - beginning_time)
@@ -109,7 +122,7 @@ def main():
         ax.draw_artist(refline)
         fig.canvas.blit(ax.bbox)
 
-        delta_t = time.time() - start_time
+        start_time = time.time()
 
 if __name__ == '__main__':
     main()

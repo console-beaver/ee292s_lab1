@@ -14,7 +14,7 @@ DELTA_T = 0.00415183  # 21.610280 / 5205
 columns = ['row', 't', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
 
 calib_df = pd.read_csv('recorded_data/super_high_sample_rate_stationary.csv')
-live_df = pd.read_csv('recorded_data/onchair6feet.csv')
+live_df = pd.read_csv('recorded_data/latest_chair.csv')
 
 avg_ax = calib_df['ax'].sum() / len(calib_df['ax'])
 avg_ay = calib_df['ay'].sum() / len(calib_df['ay'])
@@ -40,10 +40,10 @@ kf.H = np.array([[1, 0, 0]])
 elapsed_time = 0
 x_pos = []
 for row in range(live_df.shape[0]):
-    x_accel_corrected = live_df['ax'][row] - avg_ax
+    x_accel_corrected = (live_df['ax'][row] - avg_ax) 
     kf.predict()
     kf.update(x_accel_corrected)
-    x_pos.append(kf.x[0])
+    x_pos.append(kf.x[0] * 9.81 / 16384)
 
     elapsed_time += DELTA_T
 
