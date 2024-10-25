@@ -383,21 +383,26 @@ if __name__ == '__main__':
 
   f = open('recorded_data/mydata.txt', 'a')
   start_time = time.time()
-  while True:
-    icm20948.icm20948_Gyro_Accel_Read()
-    icm20948.icm20948MagRead()
-    icm20948.icm20948CalAvgValue()
-    # time.sleep(0.1)
-    icm20948.imuAHRSupdate(MotionVal[0] * 0.0175, MotionVal[1] * 0.0175,MotionVal[2] * 0.0175,
-                MotionVal[3],MotionVal[4],MotionVal[5], 
-                MotionVal[6], MotionVal[7], MotionVal[8])
-    pitch = math.asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3
-    roll  = math.atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3
-    yaw   = math.atan2(-2 * q1 * q2 - 2 * q0 * q3, 2 * q2 * q2 + 2 * q3 * q3 - 1) * 57.3
-    cur_time = time.time()
-    print("\r\n /-------------------------------------------------------------/ \r\n")
-    print('\r\n Roll = %.2f , Pitch = %.2f , Yaw = %.2f\r\n'%(roll,pitch,yaw))
-    print('\r\nAcceleration:  X = %d , Y = %d , Z = %d\r\n'%(Accel[0],Accel[1],Accel[2]))  
-    print('\r\nGyroscope:     X = %d , Y = %d , Z = %d\r\n'%(Gyro[0],Gyro[1],Gyro[2]))
-    f.write(f"{cur_time-start_time:4f}, {roll:4f},{pitch:4f},{yaw:4f},{Accel[0]:4f},{Accel[1]:4f},{Accel[2]:4f},{Gyro[0]:4f},{Gyro[1]:4f},{Gyro[2]:4f}\n")
+  data = []
+  try:
+    for i in range(10000):
+      icm20948.icm20948_Gyro_Accel_Read()
+      # icm20948.icm20948MagRead()
+      # icm20948.icm20948CalAvgValue()
+      # icm20948.imuAHRSupdate(MotionVal[0] * 0.0175, MotionVal[1] * 0.0175,MotionVal[2] * 0.0175,
+      #             MotionVal[3],MotionVal[4],MotionVal[5], 
+      #             MotionVal[6], MotionVal[7], MotionVal[8])
+      # pitch = math.asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3
+      # roll  = math.atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3
+      # yaw   = math.atan2(-2 * q1 * q2 - 2 * q0 * q3, 2 * q2 * q2 + 2 * q3 * q3 - 1) * 57.3
+      cur_time = time.time()
+      # print("\r\n /-------------------------------------------------------------/ \r\n")
+      # print('\r\n Roll = %.2f , Pitch = %.2f , Yaw = %.2f\r\n'%(roll,pitch,yaw))
+      # print('\r\nAcceleration:  X = %d , Y = %d , Z = %d\r\n'%(Accel[0],Accel[1],Accel[2]))  
+      # print('\r\nGyroscope:     X = %d , Y = %d , Z = %d\r\n'%(Gyro[0],Gyro[1],Gyro[2]))
+      data += [(cur_time - start_time, Accel[0],Accel[1],Accel[2], Gyro[0],Gyro[1],Gyro[2])]
+  except:
+    pass
 
+  import pandas as pd
+  pd.DataFrame(data, columns=["t", "ax", "ay", "az", "gx", "gy", "gz"]).to_csv("recorded_data/newdata.csv")
