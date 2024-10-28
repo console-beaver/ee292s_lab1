@@ -16,7 +16,7 @@ def get_cluster_avg(f, size):
         accum += datapoint
     return accum / size
 
-with open('../lab1/ee292s_lab1/recorded_data/25_min.txt', 'r') as f:
+with open('recorded_data/25_min.txt', 'r') as f:
     adevs = []
     x_axis = range(1, tau_range)
 

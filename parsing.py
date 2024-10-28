@@ -64,7 +64,7 @@ for i in range(0, len(df), k):
         * df["dt"].iloc[i: i + k].sum()
         * np.pi / 180
     )
-    
+
     g = (1 - beta) * g_accel_fn(df.iloc[i]) + beta * (
         R_x(delta_theta_x)
         @ R_y(delta_theta_y) @ R_z(delta_theta_z) @ g
@@ -84,9 +84,9 @@ for i in range(0, len(df), k):
     gyro_thetas += [math.atan2((g_gyro[0] ** 2 + g_gyro[1] ** 2) ** 0.5, g_gyro[2])]
     accel_thetas += [accel_fn(df.iloc[i])]
 
-plt.plot(np.array(fused_thetas) * 57.3, label="fused")
-plt.plot(np.array(gyro_thetas) * 57.3, label="gyro")
-plt.plot(np.array(accel_thetas) * 57.3, label="accel")
+plt.plot(np.array(fused_thetas) * 57.3, label="fused", color='green')
+# plt.plot(np.array(gyro_thetas) * 57.3, label="gyro")
+# plt.plot(np.array(accel_thetas) * 57.3, label="accel")
 plt.legend()
 plt.show()
 

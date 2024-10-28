@@ -1,4 +1,4 @@
-#!usr/bin/env python3
+#!/usr/bin/env python3
 
 # this is the file for running part2
 
@@ -52,7 +52,7 @@ elapsed_time = 0
 x_pos = []
 a = []
 for row in range(df.shape[0]):
-    x_accel_corrected = (df['ax'][row] - avg_ax) 
+    x_accel_corrected = (df['ax'][row] - avg_ax)
     kf.predict()
     kf.update(x_accel_corrected)
     x_pos.append(kf.x[0] * 9.81 / 16384)
@@ -60,6 +60,11 @@ for row in range(df.shape[0]):
 
     elapsed_time += DELTA_T
 
-plt.plot(list(range(df.shape[0])), x_pos)
-plt.plot(list(range(df.shape[0])), np.array(integrate(integrate(a))) * 9.81 / 16384)
+print('final_pos =', x_pos[-1])
+print('farthest_pos =', np.max(x_pos))
+plt.plot(list(range(df.shape[0])), x_pos, label='kalman estimate')
+plt.plot(list(range(df.shape[0])), np.array(integrate(integrate(a))) * 9.81 / 16384, label='integrated accel measurement')
+plt.plot(list(range(df.shape[0])), [1.829] * df.shape[0], label='6 feet = 1.829 meters')
+plt.plot(list(range(df.shape[0])), [0] * df.shape[0], label='starting position')
+plt.legend(loc='upper left')
 plt.show()
