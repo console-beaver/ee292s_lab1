@@ -15,12 +15,10 @@ DELTA_T = 0.01  # 21.610280 / 5205
 
 columns = ['row', 't', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
 
-calib_df = pd.read_csv('recorded_data/super_high_sample_rate_stationary.csv')
-df = pd.read_csv('recorded_data/newest_data.csv')
+# calib_df = pd.read_csv('recorded_data/super_high_sample_rate_stationary.csv')
+df = pd.read_csv('recorded_data/6foot2.csv')
 
-avg_ax = calib_df['ax'].sum() / len(calib_df['ax'])
-avg_ay = calib_df['ay'].sum() / len(calib_df['ay'])
-avg_az = calib_df['az'].sum() / len(calib_df['az'])
+avg_ax = df["ax"].iloc[:1000].mean()
 
 # kalman init
 
